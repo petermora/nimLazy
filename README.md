@@ -289,5 +289,5 @@ echo ourWalkFiles.filterIt(".nim" in it)
 ```
 
 # Documentation
-[https://rawgit.com/petermora/nimLazy/master/doc/lazy.html](Generated document)
+[Generated html](https://rawgit.com/petermora/nimLazy/master/doc/lazy.html)
 
