@@ -48,7 +48,7 @@ echo count(5)
 +1 function is boring, let's do *2. Iterate gives us x; f(x); f(f(x)); ...
 ```nim
 echo iterate(proc(x: int): int = 2*x, 1)
-@[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, ...].toIter()
+#@[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, ...].toIter()
 ```
 
 It takes so much time to write types, so I'll ignore them if it's possible. 
@@ -63,7 +63,7 @@ echo iterateIt("a" & it, "")
 
 The Collatz conjecture states that if we take a positive integer (like 10
 in the example below) 
-as a starting point, then the following series always reaches 1.
+as a starting point, then the following series (half when even, 3*n+1 when odd) always reaches 1.
 ```nim
 echo iterateIt(if it mod 2 == 1: 3*it+1 else: it div 2, 10)
 #@[10, 5, 16, 8, 4, 2, 1, 4, 2, 1, ...].toIter()
@@ -73,7 +73,7 @@ In addition to **it**, we can use **idx** as well, it contains the index. Since
 x^2 = (x-1)^2 + 2*x - 1, the square numbers are:
 ```nim
 echo iterateIt(it + 2*idx - 1, 0)
-@[0, 1, 4, 9, 16, 25, 36, 49, 64, 81, ...].toIter()
+#@[0, 1, 4, 9, 16, 25, 36, 49, 64, 81, ...].toIter()
 ```
 
 There is an iterator version for +,-,*,/,div,mod,==,<,<=,<%,<=%,min,max, so
@@ -97,7 +97,7 @@ echo count(0) + repeat(5)
 
 The & symbol is used for concatenation of strings, and not the iterators
 themselves. If one of the iterators has fewer values, then the output
-truncated as well:
+truncated:
 ```nim
 echo toIter(@["a", "b", "c"]) & count(1).mapIt($it)
 #@[a1, b2, c3].toIter()
@@ -167,7 +167,7 @@ echo iterateKV((v, k+v), (1,1)).print("just after iterateKV").mapKV(k)
 #@[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, ...].toIter()
 ```
 
-The list of primes can be given by filtering out all the primes from count(2)
+The list of primes can be given by filtering out all the multiples of the primes from count(2)
 which we have already found:
 ```nim
 proc sieve(iter: iterator(): int): iterator(): int=
@@ -179,7 +179,8 @@ echo sieve(count(2))
 #@[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, ...].toIter()
 ```
 
-Partition(2) creates pairs (its cheating with a macro, this 2 has to be known
+Partition(2) creates pairs (its cheating, it uses a macro, this parameter 
+2 has to be known
 at compile time). It will skip the last item if the list is finite 
 and has odd number of elements.
 With step=1 we can force to step only one instead of two:
@@ -253,7 +254,7 @@ The copy() function uses deepCopy().
 Printing an iterator with echo calls
 $, which creates a deepCopy of the object without modifying it.
  We have peek(), peekList(), $, [] and
-hasNext() functions, which doesn't modify their iterator, but copies instead.
+hasNext() functions, which doesn't modify their iterator parameter, but copies instead.
 We can use [] get values:
 ```nim
 var countFromZero = count(0)
@@ -271,7 +272,7 @@ echo countFromZero
 ```
 
 The []= syntax also accepts iterator of bool. The selector iterator is copied
-with deepCopy.
+with deepCopy in order to have independence:
 ```nim
 countFromZero[countFromZero < 5] = -5
 echo countFromZero
@@ -287,4 +288,6 @@ echo ourWalkFiles.filterIt(".nim" in it)
 #@[github.nim, lazy.nimble, misc.nim].toIter()
 ```
 
+# Documentation
+[https://rawgit.com/petermora/nimLazy/master/doc/lazy.html](Generated document)
 
