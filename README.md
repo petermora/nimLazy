@@ -6,7 +6,7 @@ Ok, Bud. We're gonna take this nice and slow.
 ```nim
 import lazy
 echo count(5,10)
-#@[5, 6, 7, 8, 9].toIter()
+#toIter(@[5, 6, 7, 8, 9])
 ```
 
 The function count() returns an iterator:
@@ -24,17 +24,22 @@ We can take the iterator's first 3 elements, length, reverse, last item
 and convert it to seq. We can also drop the last element:
 ```nim
 echo count(5,10).take(3)
-#@[5, 6, 7].toIter()
+#toIter(@[5, 6, 7])
+
 echo count(5,10).len
 #5
+
 echo count(5,10).reverse
-#@[9, 8, 7, 6, 5].toIter()
+#toIter(@[9, 8, 7, 6, 5])
+
 echo count(5,10).last
 #9
+
 echo count(5,10).toSeq
 #@[5, 6, 7, 8, 9]
+
 echo count(5,10).drop(1)
-#@[6, 7, 8, 9].toIter()
+#toIter(@[6, 7, 8, 9])
 ```
 
 We can start counting from 5 without stopping. Don't call len, reverse or last 
@@ -42,13 +47,13 @@ on this, they will run forever (but dropping the first or the last element works
 The echo is limited to 10 values.
 ```nim
 echo count(5)
-#@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...].toIter()
+#toIter(@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...])
 ```
 
 +1 function is boring, let's do *2. Iterate gives us x; f(x); f(f(x)); ...
 ```nim
 echo iterate(proc(x: int): int = 2*x, 1)
-#@[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, ...].toIter()
+#toIter(@[1, 2, 4, 8, 16, 32, 64, 128, 256, 512, ...])
 ```
 
 It takes so much time to write types, so I'll ignore them if it's possible. 
@@ -56,9 +61,10 @@ In functions like iterateIt, mapIt, filterIt, ... the variable is always **it**:
 Types are checked at compile-time.
 ```nim
 echo iterateIt(10*it, 1)
-#@[1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, ...].toIter()
+#toIter(@[1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, ...])
+
 echo iterateIt("a" & it, "")
-#@[, a, aa, aaa, aaaa, aaaaa, aaaaaa, aaaaaaa, aaaaaaaa, aaaaaaaaa, ...].toIter()
+#toIter(@[, a, aa, aaa, aaaa, aaaaa, aaaaaa, aaaaaaa, aaaaaaaa, aaaaaaaaa, ...])
 ```
 
 The Collatz conjecture states that if we take a positive integer (like 10
@@ -66,21 +72,21 @@ in the example below)
 as a starting point, then the following series (half when even, 3*n+1 when odd) always reaches 1.
 ```nim
 echo iterateIt(if it mod 2 == 1: 3*it+1 else: it div 2, 10)
-#@[10, 5, 16, 8, 4, 2, 1, 4, 2, 1, ...].toIter()
+#toIter(@[10, 5, 16, 8, 4, 2, 1, 4, 2, 1, ...])
 ```
 
 In addition to **it**, we can use **idx** as well, it contains the index. Since 
 x^2 = (x-1)^2 + 2*x - 1, the square numbers are:
 ```nim
 echo iterateIt(it + 2*idx - 1, 0)
-#@[0, 1, 4, 9, 16, 25, 36, 49, 64, 81, ...].toIter()
+#toIter(@[0, 1, 4, 9, 16, 25, 36, 49, 64, 81, ...])
 ```
 
 There is an iterator version for +,-,*,/,div,mod,==,<,<=,<%,<=%,min,max, so
 the square numbers are really just:
 ```nim
 echo count(0) * count(0)
-#@[0, 1, 4, 9, 16, 25, 36, 49, 64, 81, ...].toIter()
+#toIter(@[0, 1, 4, 9, 16, 25, 36, 49, 64, 81, ...])
 ```
 
 For these operators the first or the second parameter can be an interator,
@@ -88,11 +94,13 @@ or both. You can use the library's template to prepare your functions for
 iterators. There are several ways to start counting from 5:
 ```nim
 echo count(5)
-#@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...].toIter()
+#toIter(@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...])
+
 echo count(0) + 5
-#@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...].toIter()
+#toIter(@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...])
+
 echo count(0) + repeat(5)
-#@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...].toIter()
+#toIter(@[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ...])
 ```
 
 The & symbol is used for concatenation of strings, and not the iterators
@@ -100,13 +108,13 @@ themselves. If one of the iterators has fewer values, then the output
 truncated:
 ```nim
 echo toIter(@["a", "b", "c"]) & count(1).mapIt($it)
-#@[a1, b2, c3].toIter()
+#toIter(@[a1, b2, c3])
 ```
 
 We can cycle the shorter to have an infinite list:
 ```nim
 echo toIter(@["a", "b", "c"]).cycle() & count(1).mapIt($it)
-#@[a1, b2, c3, a4, b5, c6, a7, b8, c9, a10, ...].toIter()
+#toIter(@[a1, b2, c3, a4, b5, c6, a7, b8, c9, a10, ...])
 ```
 
 We have iterateKV, mapKV, filterKV, ... functions which takes iterators of 
@@ -140,14 +148,14 @@ echo count(1,10, includeLast=true).foldAB(a+b)
 The maximum values in a sequence we have seen so far:
 ```nim
 echo toIter(@[4,7,6,5,9,2]).foldListAB(if a>b: a else: b)
-#@[4, 7, 7, 7, 9, 9].toIter()
+#toIter(@[4, 7, 7, 7, 9, 9])
 ```
 
 IterateKV supposed to create key-value pairs, but it will just do fine for 
 generating the Fibonacci sequence:
 ```nim
 echo iterateKV((v, k+v), (1,1)).mapKV(k)
-#@[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, ...].toIter()
+#toIter(@[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, ...])
 ```
 
 This might be a little tricky inside, so let me print the inner values:
@@ -164,7 +172,7 @@ echo iterateKV((v, k+v), (1,1)).print("just after iterateKV").mapKV(k)
 #DEBUG: "just after iterateKV" @github.nim(88): (Field0: 34, Field1: 55)
 #DEBUG: "just after iterateKV" @github.nim(88): (Field0: 55, Field1: 89)
 #DEBUG: "just after iterateKV" @github.nim(88): (Field0: 89, Field1: 144)
-#@[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, ...].toIter()
+#toIter(@[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, ...])
 ```
 
 The list of primes can be given by filtering out all the multiples of the primes from count(2)
@@ -176,7 +184,7 @@ proc sieve(iter: iterator(): int): iterator(): int=
     yield first
     sieve(iter.filterIt(it mod first != 0)).yieldAll
 echo sieve(count(2))
-#@[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, ...].toIter()
+#toIter(@[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, ...])
 ```
 
 Partition(2) creates pairs (its cheating, it uses a macro, this parameter 
@@ -186,9 +194,10 @@ and has odd number of elements.
 With step=1 we can force to step only one instead of two:
 ```nim
 echo toIter(@["A","B","C","D","E"]).partition(2)
-#@[(Field0: A, Field1: B), (Field0: C, Field1: D)].toIter()
+#toIter(@[(Field0: A, Field1: B), (Field0: C, Field1: D)])
+
 echo toIter(@["A","B","C","D","E"]).partition(2,step=1)
-#@[(Field0: A, Field1: B), (Field0: B, Field1: C), (Field0: C, Field1: D), (Field0: D, Field1: E)].toIter()
+#toIter(@[(Field0: A, Field1: B), (Field0: B, Field1: C), (Field0: C, Field1: D), (Field0: D, Field1: E)])
 ```
 
 We have all the bricks to print the first 10 twin primes:
@@ -246,6 +255,7 @@ var indFromZero = count(0)
 var indOnlyLargerThan10 = indFromZero.copy.filterIt(it>10)
 echo indOnlyLargerThan10()
 #11
+
 echo indFromZero()
 #0
 ```
@@ -260,6 +270,7 @@ We can use [] get values:
 var countFromZero = count(0)
 echo countFromZero[100]
 #100
+
 echo countFromZero[200]
 #200
 ```
@@ -268,7 +279,7 @@ And []= to override them:
 ```nim
 countFromZero[3] = 99
 echo countFromZero
-@[0, 1, 2, 99, 4, 5, 6, 7, 8, 9, ...].toIter()
+@toIter([0, 1, 2, 99, 4, 5, 6, 7, 8, 9, ...])
 ```
 
 The []= syntax also accepts iterator of bool. The selector iterator is copied
@@ -276,7 +287,7 @@ with deepCopy in order to have independence:
 ```nim
 countFromZero[countFromZero < 5] = -5
 echo countFromZero
-#@[-5, -5, -5, 99, -5, 5, 6, 7, 8, 9, ...].toIter()
+#toIter(@[-5, -5, -5, 99, -5, 5, 6, 7, 8, 9, ...])
 ```
 
 The os module has an iterator for listing files called walkFiles(). We can't
@@ -285,7 +296,7 @@ copy the iterator itself to a value, so let's wrap it, then filter for only ".ni
 import os, strutils
 var ourWalkFiles = wrapIter(walkFiles("*"))
 echo ourWalkFiles.filterIt(".nim" in it)
-#@[github.nim, lazy.nimble, misc.nim].toIter()
+#toIter(@[github.nim, lazy.nimble, misc.nim])
 ```
 
 # Documentation

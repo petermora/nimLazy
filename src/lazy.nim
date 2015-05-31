@@ -279,18 +279,18 @@ when isMainModule:
 
 proc `$`*[T](iter: iterator(): T, limit = 10): string =
   ## .. code-block:: Nim
-  ##   $(1;2;3) -> "@[1, 2, 3].toIter()"
+  ##   $(1;2;3) -> "toIter(@[1, 2, 3])"
   var iterCopied: type(iter)
   deepCopy(iterCopied, iter)
-  result = $toSeq(iterCopied, limit = limit)
+  result = "toIter(" & $toSeq(iterCopied, limit = limit)
   if not finished(iterCopied) and result.len > 0:
     result[result.len-1] = ','
     result = result & " ...]"
-  result = result & ".toIter()"
+  result = result & ")"
 
 when isMainModule:
   let goingToPrint = count(0,3)
-  assert `$`(goingToPrint) == "@[0, 1, 2].toIter()"
+  assert `$`(goingToPrint) == "toIter(@[0, 1, 2])"
 
 # first
 
