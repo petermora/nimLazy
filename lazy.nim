@@ -29,8 +29,8 @@ when isMainModule:
 template yieldAll*[T](iter: iterator(): T) =
   ## .. code-block:: Nim
   ##   yieldAll(iter) -> for x in iter(): yield
-  var iterCopied {.gensym.} = iter
-  var x{.gensym.} = iterCopied()
+  var iterCopied = iter
+  var x = iterCopied()
   while not finished(iterCopied):
     yield x
     x = iterCopied()
@@ -453,7 +453,7 @@ proc print*[T](iter: iterator(): T, comment: string = ""): iterator(): T =
 # general macros for injecting variables
 import macros
 
-macro injectParam(w: expr, value: expr): stmt {.immediate.} =
+macro injectParam(w: expr, value: expr): stmt =
   result = newNimNode(nnkStmtList)
   var varSection = newNimNode(nnkVarSection)
   if w.len == 0:
@@ -471,7 +471,7 @@ macro injectParam(w: expr, value: expr): stmt {.immediate.} =
               newLit(j))))
   add(result, varSection)
 
-macro toTuple(w: expr, value: expr, n: int): stmt {.immediate.} =
+macro toTuple(w: expr, value: expr, n: int): stmt =
   result = newNimNode(nnkStmtList)
   var varSection = newNimNode(nnkVarSection)
   var par = newNimNode(nnkPar)
@@ -495,18 +495,18 @@ proc iterate*[T](f: proc(anything: T): T, x0: T): iterator(): T =
 template iterateP*[T](params, f: expr, x0: T): iterator(): T =
   ## .. code-block:: Nim
   ##   iterateP(a, a+10, x0) -> x0; x0+10; x0+10+10; ...
-  var index{.gensym.} = 1
-  type T{.gensym.} = type(x0)
+  var index = 1
+  type T = type(x0)
   iterate(proc(x: T): T =
     injectParam(params, x); var idx{.inject.}=index; index+=1; f, x0)
 
-template iterateIt*[T](f: expr, x0: T): (iterator(): T) {.immediate.} =
+template iterateIt*[T](f: expr, x0: T): (iterator(): T) =
   ## .. code-block:: Nim
   ##   iterateIt(it*2, x0) -> x0; x0*2; x0*2*2; ...
   iterateP(it, f, x0)
 
 template iterateKV*[T,S](f: expr, x0: (T, S)):
-                              (iterator(): (T, S)) {.immediate.} =
+                              (iterator(): (T, S)) =
   ## .. code-block:: Nim
   ##   iterateKV((2*k, 3*v), (1,1)) -> (1,1); (2,3); (4,9); ...
   iterateP((k,v), f, x0)
@@ -572,8 +572,8 @@ proc takeWhile*[T](iter: iterator(): T, cond: proc(x: T):bool): iterator(): T =
 template takeWhileP*[T](iter: iterator(): T, params, cond: expr): iterator(): T =
   ## .. code-block:: Nim
   ##  takeWhile(1;2;3;4, Q, Q < 4) -> 1;2;3
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   takeWhile(iter, proc(x: T): bool =
     injectParam(params, x); var idx{.inject.}=index; index+=1; cond)
 
@@ -597,6 +597,7 @@ when isMainModule:
   assert lessThanFour() == 0
   assert finished(lessThanFour)
 
+  assert count(1).takeWhileIt(it mod 5 != 0).toSeq() == @[1,2,3,4]
   assert count(1).takeWhileIt(it mod 5 != 0).toSeq() == @[1,2,3,4]
 
   assert iterateIt((idx,2*idx), (0,0)).takeWhileKV(k+5 > v).toSeq() ==
@@ -679,8 +680,8 @@ proc dropWhile*[T](iter: iterator(): T, cond: proc(x: T):bool): iterator(): T =
 template dropWhileP*[T](iter: iterator(): T, params, cond: expr): iterator(): T =
   ## .. code-block:: Nim
   ##   dropWhileP(1;2;3;4, Q, Q < 4) -> 1;2;3
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   dropWhile(iter, proc(x: T): bool =
     injectParam(params, x); var idx{.inject.}=index; index+=1; cond)
 
@@ -776,7 +777,7 @@ template toTableP*[A,B](iter: iterator(): (A,B), params, f: expr):
                                                             Table[A,B] =
   ## .. code-block:: Nim
   ##   toTableP((1,"A");(1,"B");(3,"C"), (A,B), A&B) -> {1: "AB", 3: "C"}
-  type B {.gensym.} = type((var copied{.gensym.} = iter; copied()[1]))
+  type B = type((var copied = iter; copied()[1]))
   toTable(iter, proc(a, b: B): B =
     injectParam(params, [a,b]); f)
 
@@ -848,8 +849,8 @@ proc filter*[T](iter: iterator(): T, f: (proc(any :T):bool) ): iterator(): T =
 template filterP*[T](iter: iterator(): T, params, f: expr): iterator(): T =
   ## .. code-block:: Nim
   ##   filter(1;2;3;4;5, Q, Q>3) -> 4;5
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   filter(iter, proc(x: T): bool =
     injectParam(params, x); var idx{.inject.} = index; index+=1; f)
 
@@ -909,9 +910,9 @@ proc map*[T,S](iter: iterator(): T, f: (proc(any: T): S) ): iterator(): S =
 template mapP*[T,S](iter: iterator(): T, params, f: expr): iterator(): S =
   ## .. code-block:: Nim
   ##   mapP(1;2;3;4;5, Q, Q+10) -> 11;12;13;14;15
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type S {.gensym.} = type((
+  var index = 0
+  type T = type((var copied = iter; copied()))
+  type S = type((
     block:
       var empty: T
       injectParam(params, empty)
@@ -990,10 +991,10 @@ template mapP*[T,S,U](iter: iterator(): T, params, f: expr,
                       iter2: iterator(): U): iterator(): S =
   ## .. code-block:: Nim
   ##   map(1;2;3;4;5, (P,Q), P+Q, 10;20;30) -> 11,22,33
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type U {.gensym.} = type((var copied{.gensym.} = iter2;copied()))
-  type S {.gensym.} = type((
+  var index = 0
+  type T = type((var copied = iter; copied()))
+  type U = type((var copied = iter2;copied()))
+  type S = type((
     block:
       var empty: T
       var empty2: U
@@ -1060,11 +1061,11 @@ proc map*[T,S,U,V](iter: iterator(): T, f: (proc(anyT: T, anyU: U, anyV: V):S),
 template mapP*[T,S,U,V](iter: iterator(): T, params, f: expr,
                  iter2: iterator(): U, iter3: iterator(): V): iterator(): S =
   ## Map for 3 parameters
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type U {.gensym.} = type((var copied{.gensym.} = iter2;copied()))
-  type V {.gensym.} = type((var copied{.gensym.} = iter3;copied()))
-  type S {.gensym.} = type((
+  var index = 0
+  type T = type((var copied = iter; copied()))
+  type U = type((var copied = iter2;copied()))
+  type V = type((var copied = iter3;copied()))
+  type S = type((
     block:
       var empty: T
       var empty2: U
@@ -1137,8 +1138,8 @@ template replaceP*[T](iter: iterator(): T, params, f: expr, value: T):
                                             iterator(): T =
   ## .. code-block:: Nim
   ##   replace(1;2;3;4;5, Q, Q==4, 100) -> 1;2;3;100;5
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   replace(iter, proc(x: T): bool =
     injectParam(params, x); var idx{.inject.}=index; index+=1; f, value)
 
@@ -1146,8 +1147,8 @@ template replacePV*[T](iter: iterator(): T, params, f: expr, valueF: expr):
                                             iterator(): T =
   ## .. code-block:: Nim
   ##   replace(1;2;3;4;5, Q, Q==4, Q+100) -> 1;2;3;104;5
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   replace(iter, proc(x: T): bool =
     injectParam(params, x); var idx{.inject.}=index; index+=1; f,
     proc(x: T): T =
@@ -1199,6 +1200,16 @@ proc concat*[T](iter: iterator(): T, iter2: iterator(): T): iterator(): T =
     iter.yieldAll
     iter2.yieldAll
 
+#proc concat*[T](iters: varargs[iterator(): T]): iterator(): T =
+#  ## .. code-block:: Nim
+#  ##   concat(1;2;3), (10;11;12) -> 1;2;3;10;11;12
+#  result = iterator(): T {.closure.}=
+#    for i in 0..<iters.len:
+#      var x = iters[i]()
+#      while not finished(iters[i]):
+#        yield x
+#        x = iters[i]()
+
 when isMainModule:
   assert count(1,4).concat(count(0,3)).toSeq() == @[1,2,3,0,1,2]
 
@@ -1235,9 +1246,9 @@ proc unique*[T,S](iter: iterator(): T, f: proc(any: T): S): iterator(): T =
 template uniqueP*[T](iter: iterator(): T, params, f: expr): iterator(): T =
   ## .. code-block:: Nim
   ##   unique(1;2;4;3;2;6;5, Q, Q div 5) -> 1;6
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type S {.gensym.} = type((
+  var index = 0
+  type T = type((var copied = iter; copied()))
+  type S  = type((
     block:
       var empty: T
       injectParam(params, empty)
@@ -1417,16 +1428,16 @@ proc fold*[T](iter: iterator(): T, f: proc(a, b: T): T, start: T): T =
 template foldP*[T](iter: iterator(): T, params, f: expr): T =
   ## .. code-block:: Nim
   ##   foldP(1;2;3, (P,Q), P+Q) -> 6
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   fold(iter, proc(x, y: T): T =
     injectParam(params, (x,y)); var idx{.inject.}=index; index+=1; f)
 
 template foldP*[T](iter: iterator(): T, params, f: expr, start: T): T =
   ## .. code-block:: Nim
   ##   foldP(1;2;3, (P,Q), P+Q, 100) -> 106
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   fold(iter, proc(x, y: T): T =
     injectParam(params, (x,y)); var idx{.inject.}=index; index+=1; f, start)
 
@@ -1469,8 +1480,8 @@ proc foldList*[T](iter: iterator(): T, f: proc(a, b: T): T): iterator(): T =
 template foldListP*[T](iter: iterator(): T, params, f: expr): iterator(): T =
   ## .. code-block:: Nim
   ##   foldListP(1;2;3, (P,Q), P+Q) -> 1;3;6
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
+  var index = 0
+  type T = type((var copied = iter; copied()))
   foldList(iter, proc(x, y: T): T =
     injectParam(params, (x,y)); var idx{.inject.}=index; index+=1; f)
 
@@ -1566,8 +1577,8 @@ template partition*[T](iter: iterator(): T, n: int):
   ##   partition(1;2;3;4;5;6,7, 2) -> (1,2);(3,4);(5,6)
   when n > 0:
     discard # TODO: find a good way to throw error when n is not known
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type S {.gensym.} = type((
+  type T = type((var copied = iter; copied()))
+  type S = type((
     block:
       var empty = newSeq[T](n)
       toTuple(Ts, empty, n)
@@ -1581,8 +1592,8 @@ template partition*[T](iter: iterator(): T, n, step: int):
   ##   partition(1;2;3;4;5, 2,1) -> (1,2);(2,3);(3,4);(4,5)
   when n > 0:
     discard
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type S {.gensym.} = type((
+  type T = type((var copied = iter; copied()))
+  type S = type((
     block:
       var empty = newSeq[T](n)
       toTuple(Ts, empty, n)
@@ -1596,8 +1607,8 @@ template partition*[T](iter: iterator(): T, n, step: int, pad: T):
   ##   partition(1;2;3;4;5, 2,2,99) -> (1,2);(3,4);(5,99)
   when n > 0:
     discard
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type S {.gensym.} = type((
+  type T = type((var copied = iter; copied()))
+  type S = type((
     block:
       var empty = newSeq[T](n)
       toTuple(Ts, empty, n)
@@ -1651,9 +1662,9 @@ template partitionByP*[T,S](iter: iterator(): T, params, f: expr):
   ## .. code-block:: Nim
   ##   partitionByP(1;2;3;4;5, P, P mod 3==0) ->
   ##                            @[1,2];@[3];@[4,5]
-  var index{.gensym.} = 0
-  type T {.gensym.} = type((var copied{.gensym.} = iter; copied()))
-  type S {.gensym.} = type((
+  var index = 0
+  type T = type((var copied = iter; copied()))
+  type S = type((
     block:
       var empty: T
       injectParam(params, empty)
@@ -1685,7 +1696,7 @@ when isMainModule:
 template wrapIter*[T](iter: expr): iterator(): T =
   ## .. code-block:: Nim
   ##   wrapIter(walkFiles("*")) -> "a.nim"; "b.nim"; ...
-  type T {.gensym.} = type(iter)
+  type T = type(iter)
   iterator result(): T {.closure,gensym.} =
     for x in iter:
       yield x
