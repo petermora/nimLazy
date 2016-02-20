@@ -243,7 +243,7 @@ when isMainModule:
   assert count(0, 10).len == 10
   assert count(0, 0).len == 0
 
-  
+
 
 # toSeq
 
@@ -327,7 +327,7 @@ proc last*[T](iter: iterator(): T): T=
   while not finished(iter):
     result = x
     x = iter()
- 
+
 proc last*[T](iter: iterator(): T, default: T): T=
   ## .. code-block:: Nim
   ##   last(a;b;c;d) -> d
@@ -475,7 +475,7 @@ macro toTuple(w: expr, value: expr, n: int): stmt =
   result = newNimNode(nnkStmtList)
   var varSection = newNimNode(nnkVarSection)
   var par = newNimNode(nnkPar)
-  for i in 0..<n.intVal:
+  for i in 0.BiggestInt..<n.intVal:
     par.add(newNimNode(nnkBracketExpr).add(value, newLit(i)))
   varSection.add(newIdentDefs(ident($w), newEmptyNode(), par))
   add(result, varSection)
@@ -648,7 +648,7 @@ when isMainModule:
 proc drop*[T](iter: iterator(): T, n: int = 1): iterator(): T =
   ## .. code-block:: Nim
   ##   drop(1;2;3;4;5, 3) -> 4;5
-  ##   drop(1;2, 3) -> 
+  ##   drop(1;2, 3) ->
   result = iterator(): T {.closure.}=
     var i = 0
     var x = iter()
@@ -710,7 +710,7 @@ when isMainModule:
 proc dropLast*[T](iter: iterator(): T, n: int = 1): iterator(): T =
   ## .. code-block:: Nim
   ##   dropLast(1;2;3;4;5, 3) -> 1;2
-  ##   dropLast(1;2, 3) -> 
+  ##   dropLast(1;2, 3) ->
   result = iterator(): T {.closure.}=
     var lastItems = newSeq[T]()
     var x = iter()
@@ -751,7 +751,7 @@ proc toTable*[A,B](iter: iterator(): (A,B)): Table[A,B] =
 proc toTable*[A,B](iter: iterator(): (A,B),
       aggr: proc(any1, any2: B): B): Table[A,B] =
   ## .. code-block:: Nim
-  ##   toTable((1,"A");(2,"B");(3,"C"), (x, y:string) => x&","&y) 
+  ##   toTable((1,"A");(2,"B");(3,"C"), (x, y:string) => x&","&y)
   ##                              -> {1: "A", 2: "B", 3: "C"}
   result = initTable[A,B]()
   var x = iter()
@@ -827,7 +827,7 @@ proc toIter*[A, B](t: Table[A, B]): (iterator(): (A, B)) =
 
 when isMainModule:
   assert take(@[1,2,3,4,5].toIter(), 3).toSeq() == @[1,2,3]
-  
+
   var simpleTable = initTable[string, string]()
   simpleTable["one"] = "first number"
   simpleTable["two"] = "second number"
@@ -924,13 +924,13 @@ template mapP*[T,S](iter: iterator(): T, params, f: expr): iterator(): S =
 template mapIt*[T,S](iter: iterator(): T, f: expr): iterator(): S =
   ## .. code-block:: Nim
   ##   mapIt(1;2;3;4;5, it+10) -> 11;12;13;14;15
-  mapP(iter, it, f) 
+  mapP[T,S](iter, it, f)
 
 template mapKV*[A,B,T](iter: iterator(): (A,B), f: expr):
                                                   iterator(): T =
   ## .. code-block:: Nim
   ##   mapKV(("one", 1);("two", 2);("three", 3), v) -> 1;2;3
-  mapP(iter, (k, v), f)
+  mapP[T,S](iter, (k, v), f)
 
 when isMainModule:
   var toString = count(0).map(proc(x: int): string = $x)
@@ -1322,7 +1322,7 @@ when isMainModule:
 
 proc `[]=`*[T](iter: var iterator(): T, n: int, value: T) =
   ## .. code-block:: Nim
-  ##   (1;2;3;4;5)[1] = 100 ->    
+  ##   (1;2;3;4;5)[1] = 100 ->
   ##              (the original is modified to 1;100;3;4;5)
   if n < 0:
     raise newException(IndexError, "Negative index")
